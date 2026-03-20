@@ -2,6 +2,13 @@ import { t, getLanguage } from '../utils/i18n.js';
 import { store } from '../state/store.js';
 import { api } from '../api/client.js';
 
+// Maps app language codes to BCP-47 language tags for Web Speech API
+const SPEECH_LANG_MAP = {
+    en: 'en-IN',   // English (India) — understands Indian accent better
+    hi: 'hi-IN',   // Hindi (India)
+    mr: 'mr-IN',   // Marathi (India)
+};
+
 /**
  * KrishiSarth AI Assistant
  * Floating chat widget powered by Claude API.
@@ -138,6 +145,19 @@ function _buildWidget() {
                         transition: border-color 0.2s;
                     "
                 ></textarea>
+
+                <!-- Voice button -->
+                <button id="assistant-voice-btn" title="Voice input" style="
+                    width:40px; height:40px; border-radius:12px;
+                    background:#f0fdf4; border:1px solid #bbf7d0;
+                    cursor:pointer; flex-shrink:0;
+                    display:flex; align-items:center; justify-content:center;
+                    transition: all 0.2s;
+                ">
+                    <i data-lucide="mic" style="width:16px;height:16px;color:#1a7a4a;"></i>
+                </button>
+
+                <!-- Send button -->
                 <button id="assistant-send-btn" style="
                     width:40px; height:40px; border-radius:12px;
                     background:#1a7a4a; border:none; cursor:pointer;
@@ -157,6 +177,18 @@ function _buildWidget() {
             #assistant-input:focus { border-color: #1a7a4a !important; box-shadow: 0 0 0 3px rgba(26,122,74,0.1); }
             #assistant-messages::-webkit-scrollbar { width: 4px; }
             #assistant-messages::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 2px; }
+
+            #assistant-voice-btn:hover { background:#dcfce7 !important; border-color:#86efac !important; }
+            #assistant-voice-btn.recording {
+                background:#fef2f2 !important;
+                border-color:#fca5a5 !important;
+                animation: pulse-record 1s ease infinite;
+            }
+            #assistant-voice-btn.recording i { color:#ef4444 !important; }
+            @keyframes pulse-record {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+                50%       { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+            }
         </style>
     `;
 
@@ -169,6 +201,7 @@ function _buildWidget() {
     const messages = el.querySelector('#assistant-messages');
     const input    = el.querySelector('#assistant-input');
     const sendBtn  = el.querySelector('#assistant-send-btn');
+    const voiceBtn = el.querySelector('#assistant-voice-btn');
     const toggleBtn = el.querySelector('#assistant-toggle');
     const closeBtn = el.querySelector('#assistant-close-btn');
     const clearBtn = el.querySelector('#assistant-clear-btn');
@@ -208,11 +241,142 @@ function _buildWidget() {
         }
     });
 
+    // ── Voice input ───────────────────────────────────────────────────────────
+    let _recognition = null;
+    let _isRecording = false;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        // Browser does not support Web Speech API — hide the button
+        voiceBtn.style.display = 'none';
+    } else {
+        voiceBtn.addEventListener('click', () => {
+            if (_isRecording) {
+                // Stop recording
+                _recognition?.stop();
+            } else {
+                // Start recording
+                _startVoiceRecognition(voiceBtn, input, messages);
+            }
+        });
+    }
+
     // Auto-resize textarea
     input.addEventListener('input', () => {
         input.style.height = 'auto';
         input.style.height = Math.min(input.scrollHeight, 80) + 'px';
     });
+
+    function _startVoiceRecognition(btn, inputEl, messagesEl) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        _recognition = new SpeechRecognition();
+
+        // Set language based on current app language
+        const lang = getLanguage();
+        _recognition.lang = SPEECH_LANG_MAP[lang] || 'en-IN';
+
+        _recognition.continuous     = false;  // stop after first pause
+        _recognition.interimResults = true;   // show partial results while speaking
+        _recognition.maxAlternatives = 1;
+
+        _isRecording = true;
+        btn.classList.add('recording');
+
+        // Change mic icon to stop icon while recording
+        const iconEl = btn.querySelector('i');
+        if (iconEl) {
+            iconEl.setAttribute('data-lucide', 'mic-off');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        // Show recording status in input placeholder
+        const originalPlaceholder = inputEl.placeholder;
+        inputEl.placeholder = lang === 'hi' ? 'सुन रहा हूं...' :
+                              lang === 'mr' ? 'ऐकत आहे...' :
+                              'Listening...';
+        inputEl.style.borderColor = '#fca5a5';
+
+        _recognition.onresult = (event) => {
+            let interimText  = '';
+            let finalText    = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalText += transcript;
+                } else {
+                    interimText += transcript;
+                }
+            }
+
+            // Show interim results in the input field as user speaks
+            if (interimText) {
+                inputEl.value = interimText;
+            }
+            if (finalText) {
+                inputEl.value = finalText;
+                inputEl.style.height = 'auto';
+                inputEl.style.height = Math.min(inputEl.scrollHeight, 80) + 'px';
+            }
+        };
+
+        _recognition.onerror = (event) => {
+            _stopRecording(btn, inputEl, originalPlaceholder, iconEl);
+
+            if (event.error === 'not-allowed') {
+                // Microphone permission denied
+                _appendMessage(
+                    messagesEl,
+                    'error',
+                    lang === 'hi' ? 'माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।' :
+                    lang === 'mr' ? 'मायक्रोफोन परवानगी द्या आणि पुन्हा प्रयत्न करा.' :
+                    'Microphone permission denied. Please allow microphone access and try again.'
+                );
+            } else if (event.error === 'no-speech') {
+                inputEl.value = '';
+            } else if (event.error !== 'aborted') {
+                _appendMessage(
+                    messagesEl,
+                    'error',
+                    lang === 'hi' ? 'आवाज़ नहीं पहचान पाए। फिर कोशिश करें।' :
+                    lang === 'mr' ? 'आवाज ओळखता आली नाही. पुन्हा प्रयत्न करा.' :
+                    'Could not recognize speech. Please try again.'
+                );
+            }
+        };
+
+        _recognition.onend = () => {
+            _stopRecording(btn, inputEl, originalPlaceholder, iconEl);
+
+            // If there is text in the input after recording, focus it
+            // so the farmer can review before sending
+            if (inputEl.value.trim()) {
+                inputEl.focus();
+                inputEl.setSelectionRange(
+                    inputEl.value.length,
+                    inputEl.value.length
+                );
+            }
+        };
+
+        _recognition.start();
+    }
+
+    function _stopRecording(btn, inputEl, originalPlaceholder, iconEl) {
+        _isRecording = false;
+        btn.classList.remove('recording');
+        inputEl.placeholder    = originalPlaceholder;
+        inputEl.style.borderColor = '';
+
+        if (iconEl) {
+            iconEl.setAttribute('data-lucide', 'mic');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        try { _recognition?.stop(); } catch { /* already stopped */ }
+        _recognition = null;
+    }
 
     return el;
 }
