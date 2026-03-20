@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     AWS_S3_BUCKET: Optional[str] = None
     AWS_REGION: Optional[str] = "ap-south-1"
     OPENWEATHER_API_KEY: Optional[str] = None
+    GROQ_KEY: Optional[str] = None
 
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",

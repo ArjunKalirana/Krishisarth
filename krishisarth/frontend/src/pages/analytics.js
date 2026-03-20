@@ -1,5 +1,6 @@
 import { getAnalytics, exportCSV } from '../api/analytics.js';
 import { store } from '../state/store.js';
+import { t } from '../utils/i18n.js';
 import { drawLineChart, drawBarChart } from '../utils/chart.js';
 import { formatLitres, roundTo } from '../utils/format.js';
 
@@ -19,14 +20,13 @@ export function renderAnalytics() {
             <!-- Header -->
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 class="text-3xl font-extrabold text-gray-900">Agri <span class="brand-text">Analytics</span></h1>
-                    <p class="text-gray-500 font-medium mt-1">Resource performance and historical crop intelligence</p>
+                    <h1 class="text-3xl font-extrabold text-gray-900">${t('anal_title')}</h1>
+                    <p class="text-gray-500 font-medium mt-1">${t('anal_subtitle')}</p>
                 </div>
                 <div class="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                    ${['7 Days', '30 Days', 'Custom'].map(p => {
-                        const val = p.replace(' ', '_').toUpperCase();
-                        return `<button class="p-btn px-5 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${val === range ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}" data-range="${val}">
-                            ${p}
+                    ${[{l: t('anal_7days'), v: '7_DAYS'}, {l: t('anal_30days'), v: '30_DAYS'}, {l: t('anal_90days'), v: '90_DAYS'}].map(p => {
+                        return `<button class="p-btn px-5 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${p.v === range ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}" data-range="${p.v}">
+                            ${p.l}
                         </button>`;
                     }).join('')}
                 </div>
@@ -61,9 +61,9 @@ export function renderAnalytics() {
                 <!-- Stats Row -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     ${[
-                        { l: 'Total Water Used', v: formatLitres(data.total_water), t: '+12%', up: true },
-                        { l: 'Water Saved %', v: `${roundTo(data.savings_pct, 1)}%`, t: '-5%', up: false },
-                        { l: 'AI Accuracy', v: '98.2%', t: '+0.4', up: true }
+                        { l: t('anal_water_used'), v: formatLitres(data.total_water), t: '+12%', up: true },
+                        { l: t('anal_saved'), v: `${roundTo(data.savings_pct, 1)}%`, t: '-5%', up: false },
+                        { l: t('anal_ai_decisions'), v: '98.2%', t: '+0.4', up: true }
                     ].map(s => `
                         <div class="ks-card p-6">
                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">${s.l}</p>
@@ -80,14 +80,14 @@ export function renderAnalytics() {
                 <!-- Charts Row -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="ks-card p-6">
-                        <h2 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-8">Moisture % (Weekly)</h2>
+                        <h2 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-8">${t('anal_moisture')}</h2>
                         <div class="h-64">${drawLineChart({
                             labels: data.labels || ['M','T','W','T','F','S','S'],
                             datasets: [{ color: '#2ECC71', data: data.moisture_series || [40,50,45,60,55,40,50] }]
                         })}</div>
                     </div>
                     <div class="ks-card p-6">
-                        <h2 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-8">Water Intake (L)</h2>
+                        <h2 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-8">${t('anal_daily_water')}</h2>
                         <div class="h-64">${drawBarChart(data.consumption_data || [{label: 'Mon', value: 120}, {label:'Tue', value: 200}])}</div>
                     </div>
                 </div>
@@ -99,10 +99,10 @@ export function renderAnalytics() {
                             <i data-lucide="history" class="w-6 h-6 text-primary"></i> Data Registry
                         </h2>
                         <button id="export-btn" class="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2">
-                            <i data-lucide="download" class="w-4 h-4"></i> EXPORT CSV
+                            <i data-lucide="download" class="w-4 h-4"></i> ${t('anal_export')}
                         </button>
                     </div>
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">Displaying last 50 telemetry points for ${range}</p>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">${t('anal_showing')} 50 telemetry points · ${range}</p>
                 </div>
             `;
 

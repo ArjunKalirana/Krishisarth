@@ -8,6 +8,9 @@ import { renderAIDecisions } from './pages/ai-decisions.js';
 import { renderControl }     from './pages/control.js';
 import { renderAnalytics }   from './pages/analytics.js';
 import { renderLogin }       from './pages/login.js';
+import { renderRegister }    from './pages/register.js';
+import { renderFarm3D }      from './pages/farm-3d.js';
+import { initAIAssistant }   from './components/ai-assistant.js';
 
 const BACKEND = 'http://localhost:8000/v1';
 
@@ -40,6 +43,7 @@ async function initApp() {
     }
 
     renderNavbar();
+    initAIAssistant();
 
     // ── Route function (must be async) ──────────────────────────────────────
     const route = async () => {
@@ -56,11 +60,14 @@ async function initApp() {
             return;
         }
 
-        // Show/hide navbar
+        // Show/hide navbar & AI Assistant
+        const asstRoot = document.getElementById('ks-assistant');
         if (hash === '#login' || hash === '#register') {
             navRoot?.classList.add('hidden');
+            if (asstRoot) asstRoot.style.display = 'none';
         } else {
             navRoot?.classList.remove('hidden');
+            if (asstRoot) asstRoot.style.display = 'block';
         }
 
         // Bootstrap farm on first authenticated route
@@ -81,10 +88,12 @@ async function initApp() {
         appRoot.innerHTML = '';
         switch (hash) {
             case '#login':      appRoot.appendChild(renderLogin());       break;
+            case '#register':   appRoot.appendChild(renderRegister());    break;
             case '#dashboard':  appRoot.appendChild(renderDashboard());   break;
             case '#ai':         appRoot.appendChild(renderAIDecisions()); break;
             case '#control':    appRoot.appendChild(renderControl());     break;
             case '#analytics':  appRoot.appendChild(renderAnalytics());   break;
+            case '#farm3d':     appRoot.appendChild(renderFarm3D());      break;
             default:
                 appRoot.innerHTML = `<div class="text-center py-20 font-mono text-gray-400">404: PAGE_NOT_FOUND</div>`;
         }

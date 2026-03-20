@@ -1,5 +1,6 @@
 import { startIrrigation, stopIrrigation } from '../api/control.js';
 import { showToast } from './toast.js';
+import { t } from '../utils/i18n.js';
 
 /**
  * ZoneCard Component (Connected)
@@ -17,13 +18,13 @@ export function createZoneCard({ id, name, lastIrrig, moisture, initialState = f
             <div class="flex items-start justify-between mb-6">
                 <div>
                     <h3 class="font-black text-gray-800 uppercase tracking-tight text-lg">${name}</h3>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Last Irrig: ${lastIrrig}</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">${t('ctrl_last_irrig')}: ${lastIrrig}</p>
                 </div>
                 <div class="flex flex-col items-end gap-2">
-                    <span class="badge ${moisture < 30 ? 'badge-dry' : moisture < 70 ? 'badge-ok' : 'badge-wet'}">${moisture}% Moisture</span>
+                    <span class="badge ${moisture < 30 ? 'badge-dry' : moisture < 70 ? 'badge-ok' : 'badge-wet'}">${moisture}% ${t('zone_moisture')}</span>
                     <div class="flex items-center gap-2">
                         <span class="text-[9px] font-black ${isOn ? 'text-primary animate-pulse' : 'text-gray-400'} uppercase tracking-tighter">
-                            ${isOn ? 'Irrigating...' : 'Status: Idle'}
+                            ${isOn ? `${t('dash_irrigating')}...` : t('ctrl_status_idle')}
                         </span>
                         <!-- Toggle Switch -->
                         <button class="toggle-btn w-12 h-6 rounded-full relative transition-colors ${isOn ? 'bg-primary' : 'bg-gray-200'}" id="toggle-${id}">
@@ -34,11 +35,11 @@ export function createZoneCard({ id, name, lastIrrig, moisture, initialState = f
             </div>
 
             <div class="space-y-4">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Select duration</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${t('ctrl_duration')}</p>
                 <div class="flex gap-2">
                     ${[10, 20, 30].map(dur => `
                         <button class="dur-btn flex-1 py-2 rounded-lg text-xs font-black transition-all border-2 ${activeDuration === dur ? 'bg-primary text-white border-primary shadow-sm' : 'bg-gray-50 text-gray-500 border-gray-100 hover:border-primary/30'}" data-dur="${dur}">
-                            ${dur}M
+                            ${dur}${t('zone_min')}
                         </button>
                     `).join('')}
                 </div>
@@ -55,20 +56,20 @@ export function createZoneCard({ id, name, lastIrrig, moisture, initialState = f
                 if (!isOn) {
                     await startIrrigation(id, activeDuration);
                     isOn = true;
-                    showToast(`${name}: Irrigation Initialized`, 'success');
+                    showToast(`${name}: ${t('toast_irrigating')}`, 'success');
                 } else {
                     const res = await stopIrrigation(id);
                     isOn = false;
-                    showToast(`Stopped. ${res.data?.water_used_l || 0}L Used`, 'success');
+                    showToast(`${t('toast_stopped')}. ${res.data?.water_used_l || 0}${t('toast_used')}`, 'success');
                 }
             } catch (err) {
                 // Conflict Handling
                 const codes = {
-                    'PUMP_ALREADY_RUNNING': 'System Conflict: Pump is already in use by another zone.',
-                    'TANK_LEVEL_CRITICAL': 'Access Denied: Tank below 10% safety limit.',
-                    'DEVICE_OFFLINE': 'Network Error: Command queued for LoRa node.'
+                    'PUMP_ALREADY_RUNNING': t('toast_pump_running'),
+                    'TANK_LEVEL_CRITICAL': t('toast_tank_low'),
+                    'DEVICE_OFFLINE': t('toast_device_offline')
                 };
-                showToast(codes[err.message] || "Command failed: Hardware verification error", 'error');
+                showToast(codes[err.message] || t('toast_cmd_fail'), 'error');
             } finally {
                 toggle.disabled = false;
                 updateUI();

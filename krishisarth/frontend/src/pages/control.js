@@ -1,5 +1,6 @@
 import { createZoneCard } from '../components/zone-card.js';
 import { injectFertigation } from '../api/control.js';
+import { t } from '../utils/i18n.js';
 import { showToast } from '../components/toast.js';
 import { api } from '../api/client.js';
 import { store } from '../state/store.js';
@@ -17,15 +18,15 @@ export function renderControl() {
     header.className = "flex flex-col md:flex-row md:items-end justify-between gap-6";
     header.innerHTML = `
         <div>
-            <h1 class="text-3xl font-extrabold text-gray-900">Manual <span class="brand-text">Control Panel</span></h1>
-            <p class="text-gray-500 font-medium mt-1">Direct hardware override and plot-specific management</p>
+            <h1 class="text-3xl font-extrabold text-gray-900">${t('ctrl_title')}</h1>
+            <p class="text-gray-500 font-medium mt-1">${t('ctrl_subtitle')}</p>
         </div>
         <div class="flex gap-3">
             <button class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-black text-sm transition-all shadow-md active:scale-95 flex items-center gap-2">
                 <i data-lucide="play-circle" class="w-5 h-5"></i> START ALL ZONES
             </button>
             <button class="border-2 border-red-600 text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl font-black text-sm transition-all active:scale-95 flex items-center gap-2 uppercase tracking-tight">
-                <i data-lucide="stop-circle" class="w-5 h-5"></i> Stop All
+                <i data-lucide="stop-circle" class="w-5 h-5"></i> ${t('ctrl_stop_all')}
             </button>
         </div>
     `;
@@ -52,7 +53,7 @@ export function renderControl() {
                 }));
             });
         }).catch(err => {
-            zoneGrid.innerHTML = `<p class="text-red-500">Failed to load zones: ${err.message}</p>`;
+            zoneGrid.innerHTML = `<p class="text-red-500">${t('ctrl_load_fail')}: ${err.message}</p>`;
         });
     }
     layout.appendChild(zoneGrid);
@@ -68,7 +69,7 @@ export function renderControl() {
     const renderFert = () => {
         fertCard.innerHTML = `
             <h2 class="text-lg font-black text-gray-800 uppercase tracking-tight mb-6 flex items-center gap-2">
-                <i data-lucide="test-tube-2" class="w-5 h-5 text-primary"></i> Fertigation Suite
+                <i data-lucide="test-tube-2" class="w-5 h-5 text-primary"></i> ${t('ctrl_fertigation')}
             </h2>
 
             <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
@@ -81,13 +82,13 @@ export function renderControl() {
 
             <div class="space-y-6">
                 <div class="flex justify-between items-end">
-                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Concentration</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">${t('ctrl_concentration')}</span>
                     <span class="text-3xl font-black text-primary" id="fert-val">12 <span class="text-xs text-gray-400 ml-1">ml/L</span></span>
                 </div>
                 <input type="range" min="0" max="30" value="12" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" id="fert-slider">
                 
                 <button id="inject-btn" class="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95">
-                    Inject Now
+                    ${t('ctrl_inject')}
                 </button>
             </div>
         `;
@@ -101,12 +102,12 @@ export function renderControl() {
                 const res = await injectFertigation('zone_1', activeNutrient, slider.value);
                 showToast(`Injection Successful: ${activeNutrient} stabilized`, 'success');
                 if (res.warning === 'HIGH_CONCENTRATION') {
-                    showToast("Mixture Alert: Optimal threshold exceeded", 'warning');
+                    showToast(t('ctrl_warn_conc'), 'warning');
                 }
             } catch (err) {
                 if (err.message === 'PUMP_NOT_RUNNING') {
-                    if (confirm("Mechanical Delay: Pump idle. Schedule with next irrigation cycle?")) {
-                        showToast("Injection Queued for next cycle", 'info');
+                    if (confirm(t('ctrl_pump_idle'))) {
+                        showToast(t('ctrl_scheduled'), 'info');
                     }
                 } else {
                     showToast(`Hardware Fault: ${err.message}`, 'error');

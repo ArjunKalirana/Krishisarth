@@ -1,4 +1,5 @@
 import { login } from '../api/auth.js';
+import { t } from '../utils/i18n.js';
 
 /**
  * Login Page
@@ -16,19 +17,19 @@ export function renderLogin() {
                     <i data-lucide="droplets" class="w-12 h-12"></i>
                 </div>
                 <h1 class="text-3xl font-black text-gray-900 tracking-tight">Krishi<span class="text-primary">Sarth</span></h1>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Smart Farming for Every Acre</p>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">${t('login_title')}</p>
             </div>
 
             <!-- Form -->
             <form id="login-form" class="space-y-5">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Email Address</label>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">${t('login_email')}</label>
                     <input type="email" id="email" required placeholder="farmer@krishisarth.com" 
                            class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium">
                 </div>
                 
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Password</label>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">${t('login_password')}</label>
                     <input type="password" id="password" required placeholder="••••••••" 
                            class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium">
                 </div>
@@ -41,15 +42,15 @@ export function renderLogin() {
                 </div>
 
                 <button type="submit" id="submit-btn" class="w-full bg-primary hover:bg-primary-dark text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 flex items-center justify-center gap-2">
-                    LOGIN TO SEEDBOX
+                    ${t('login_btn')}
                 </button>
             </form>
 
             <!-- Footer -->
             <div class="mt-8 pt-6 border-t border-gray-50 text-center">
                 <p class="text-xs font-medium text-gray-500">
-                    New to KrishiSarth? 
-                    <a href="#register" class="text-primary font-bold hover:underline">Register Plot</a>
+                    ${t('login_register')}
+                    <a href="#register" class="text-primary font-bold hover:underline">${t('login_register_link')}</a>
                 </p>
             </div>
         </div>
@@ -78,11 +79,11 @@ export function renderLogin() {
         } catch (err) {
             errorDisplay.classList.remove('hidden');
             errorMessage.textContent = err.message === 'INVALID_CREDENTIALS' 
-                ? "ACCESS DENIED: VERIFY EMAIL OR PASSWORD" 
-                : "SERVER_COMM_FAILED: CHECK CONNECTION";
+                ? t('login_error_creds') 
+                : t('login_error_conn');
             
             submitBtn.disabled = false;
-            submitBtn.innerHTML = 'LOGIN TO SEEDBOX';
+            submitBtn.innerHTML = t('login_btn');
         }
     };
 

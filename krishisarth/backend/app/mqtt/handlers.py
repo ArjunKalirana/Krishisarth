@@ -8,6 +8,9 @@ from app.db.postgres import SessionLocal
 from app.db.redis import get_redis
 from app.models.alert import Alert
 from app.core.config import settings
+from app.api.v1.websocket import manager
+from app.models.zone import Zone
+from app.models.farm import Farm
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +57,19 @@ async def handle_soil_reading(zone_id: str, payload: dict):
     
     write_api.write(bucket=settings.INFLUXDB_BUCKET, record=point)
 
+    # Real-time Broadcast via WebSocket
+    asyncio.create_task(_broadcast_zone_update(zone_id, {
+        "type": "ZONE_UPDATE",
+        "data": {
+            "zone_id": zone_id,
+            "moisture_pct": float(payload["moisture_pct"]),
+            "temp_c": float(payload["temp_c"]),
+            "ec_ds_m": float(payload["ec_ds_m"]),
+            "ph": float(payload["ph"]),
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }
+    }))
+
 async def handle_ambient_reading(zone_id: str, payload: dict):
     """Process and persist ambient air data."""
     required = ["temp_c", "humidity_pct"]
@@ -69,6 +85,17 @@ async def handle_ambient_reading(zone_id: str, payload: dict):
         .time(datetime.now(timezone.utc))
     
     write_api.write(bucket=settings.INFLUXDB_BUCKET, record=point)
+
+    # Real-time Broadcast
+    asyncio.create_task(_broadcast_zone_update(zone_id, {
+        "type": "ZONE_UPDATE",
+        "data": {
+            "zone_id": zone_id,
+            "temp_c": float(payload["temp_c"]),
+            "humidity_pct": float(payload["humidity_pct"]),
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }
+    }))
 
 async def handle_pump_telemetry(zone_id: str, payload: dict):
     """Process and monitor pump hardware performance."""
@@ -89,6 +116,19 @@ async def handle_pump_telemetry(zone_id: str, payload: dict):
     # Check for pressure drop (>0.4 bar) - can be offloaded to alert_worker
     if payload.get("pressure_drop_detected", False):
         _create_sensor_alert(zone_id, "pressure_drop", "Critical pressure drop detected in zone main-line.")
+
+async def _broadcast_zone_update(zone_id: str, message: dict):
+    """Helper to find farm_id and broadcast to connected clients."""
+    db = SessionLocal()
+    try:
+        # Resolve farm_id from zone_id
+        zone = db.query(Zone).filter(Zone.id == zone_id).first()
+        if zone:
+            await manager.broadcast_to_farm(str(zone.farm_id), message)
+    except Exception as e:
+        logger.error(f"WS Broadcast Failed: {str(e)}")
+    finally:
+        db.close()
 
 def _create_sensor_alert(zone_id: str, alert_type: str, message: str):
     """Internal helper to log alerts in PostgreSQL."""

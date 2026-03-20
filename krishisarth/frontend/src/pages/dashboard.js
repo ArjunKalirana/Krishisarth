@@ -1,5 +1,6 @@
 import { getDashboard } from '../api/farms.js';
 import { store } from '../state/store.js';
+import { t } from '../utils/i18n.js';
 import { createSensorCard } from '../components/sensor-card.js';
 import { createTankRing } from '../components/tank-ring.js';
 
@@ -52,7 +53,7 @@ async function loadDashboardData(farmId, mainEl, alertEl) {
         console.log("DASHBOARD: Loading from localStorage...");
         const data = JSON.parse(cached);
         mainEl.innerHTML = renderHeader(data) + renderGrid(data);
-        alertEl.innerHTML = renderBanner('amber', `Showing cached data · ${new Date(data.timestamp).toLocaleTimeString()}`);
+        alertEl.innerHTML = renderBanner('amber', `${t('dash_cached')} · ${new Date(data.timestamp).toLocaleTimeString()}`);
     }
 
     try {
@@ -79,7 +80,7 @@ async function loadDashboardData(farmId, mainEl, alertEl) {
 
         }
     } catch (err) {
-        alertEl.innerHTML = renderBanner('red', "CONNECTION LOST: Displaying last known field state");
+        alertEl.innerHTML = renderBanner('red', t('dash_conn_lost'));
     }
 }
 
@@ -99,13 +100,13 @@ function renderHeader(data) {
                         <i data-lucide="droplets" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-primary-light uppercase tracking-widest">Water Intelligence</p>
-                        <p class="text-xl font-extrabold">${data.summary.litres_saved || 0} Litres Saved Today</p>
+                        <p class="text-xs font-bold text-primary-light uppercase tracking-widest">${t('dash_title')}</p>
+                        <p class="text-xl font-extrabold">${data.summary.litres_saved || 0} ${t('dash_saved')}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-6">
                     <div class="text-right">
-                        <p class="text-xs font-bold text-white/60 uppercase tracking-widest">System Status</p>
+                        <p class="text-xs font-bold text-white/60 uppercase tracking-widest">${t('dash_status')}</p>
                         <span class="font-black text-sm uppercase">${data.summary.status || 'ACTIVE'}</span>
                     </div>
                 </div>
@@ -127,7 +128,7 @@ function renderGrid(data) {
             value: moisture,
             unit: "%",
             badgeType: moisture < 20 ? 'dry' : 'ok',
-            badgeText: moisture < 20 ? 'DRY' : 'OPTIMAL',
+            badgeText: moisture < 20 ? t('dash_dry') : t('dash_optimal'),
             children: `<p class="text-[9px] font-bold text-gray-400 mt-2">LAST UPDATED: ${new Date().toLocaleTimeString()}</p>`
         });
         grid.appendChild(card);
@@ -144,8 +145,8 @@ function renderSkeleton() {
 
 function renderEmptyState() {
     return `<div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-        <h2 class="text-2xl font-black text-gray-800 mb-2">Initialize Your Farm</h2>
-        <p class="text-gray-400 font-medium mb-8">No agricultural zones detected in your registry.</p>
+        <h2 class="text-2xl font-black text-gray-800 mb-2">${t('dash_no_farm')}</h2>
+        <p class="text-gray-400 font-medium mb-8">${t('dash_no_zones')}</p>
         <button class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-black text-sm transition-all shadow-lg active:scale-95">
             + CREATE FIRST ZONE
         </button>

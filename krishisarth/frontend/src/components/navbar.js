@@ -1,4 +1,6 @@
 import { store } from '../state/store.js';
+import { t, getLanguage, setLanguage, getAvailableLanguages } from '../utils/i18n.js';
+import { clearToken } from '../api/client.js';
 
 let _navbarMounted = false;
 
@@ -30,23 +32,47 @@ export function renderNavbar() {
 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center gap-8">
-                    <a href="#dashboard" class="nav-link ${activePage === '#dashboard' ? 'active' : ''}">Dashboard</a>
-                    <a href="#ai" class="nav-link ${activePage === '#ai' ? 'active' : ''}">AI Decisions</a>
-                    <a href="#control" class="nav-link ${activePage === '#control' ? 'active' : ''}">Control Panel</a>
-                    <a href="#analytics" class="nav-link ${activePage === '#analytics' ? 'active' : ''}">Analytics</a>
+                    <a href="#dashboard" class="nav-link ${activePage === '#dashboard' ? 'active' : ''}" data-page="#dashboard">${t('nav_dashboard')}</a>
+                    <a href="#ai" class="nav-link ${activePage === '#ai' ? 'active' : ''}" data-page="#ai">${t('nav_ai')}</a>
+                    <a href="#control" class="nav-link ${activePage === '#control' ? 'active' : ''}" data-page="#control">${t('nav_control')}</a>
+                    <a href="#analytics" class="nav-link ${activePage === '#analytics' ? 'active' : ''}" data-page="#analytics">${t('nav_analytics')}</a>
+                    <a href="#farm3d" class="nav-link ${activePage === '#farm3d' ? 'active' : ''}" data-page="#farm3d">${t('nav_farm3d')}</a>
                 </div>
 
                 <!-- Farmer Actions -->
                 <div class="flex items-center gap-4">
+                    <!-- Language Switcher -->
+                    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1" id="lang-switcher">
+                        ${getAvailableLanguages().map(l => `
+                            <button
+                                class="lang-btn px-2 py-1 rounded-md text-[10px] font-black transition-all
+                                    ${getLanguage() === l.code
+                                        ? 'bg-white text-primary shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600'}"
+                                data-lang="${l.code}"
+                                title="${l.name}"
+                            >${l.label}</button>
+                        `).join('')}
+                    </div>
                     <div class="relative cursor-pointer">
                         <i data-lucide="bell" class="w-6 h-6 text-gray-500 hover:text-primary transition-colors"></i>
                         ${unreadCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1 rounded-full border-2 border-white">${unreadCount}</span>` : ''}
                     </div>
-                    <div class="flex items-center gap-2 pl-4 border-l border-gray-200">
-                        <div class="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
-                            ${farmer ? farmer.name.split(' ').map(n => n[0]).join('') : 'F'}
+                    <div class="relative pl-4 border-l border-gray-200">
+                        <div id="profile-menu-btn" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                            <div class="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
+                                ${farmer ? farmer.name.split(' ').map(n => n[0]).join('') : 'F'}
+                            </div>
+                            <span class="hidden lg:block font-semibold text-sm text-gray-700">${farmer ? farmer.name : 'Farmer'}</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                         </div>
-                        <span class="hidden lg:block font-semibold text-sm text-gray-700">${farmer ? farmer.name : 'Farmer'}</span>
+                        <!-- Dropdown Menu -->
+                        <div id="profile-dropdown" class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 hidden z-50">
+                            <button id="logout-btn" class="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                Logout
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Mobile Menu Button -->
@@ -87,6 +113,47 @@ export function renderNavbar() {
 
     root.innerHTML = template;
     
+    // Profile Dropdown Toggle
+    const profileBtn = root.querySelector('#profile-menu-btn');
+    const profileDropdown = root.querySelector('#profile-dropdown');
+    const logoutBtn = root.querySelector('#logout-btn');
+
+    if (profileBtn && profileDropdown) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            clearToken();
+            store.setState('currentFarmer', null);
+            store.setState('currentFarm', null);
+            window.location.hash = '#login';
+        });
+    }
+
+    // Language switcher
+    root.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setLanguage(btn.dataset.lang);
+            // Re-render navbar to update active language
+            _navbarMounted = false;
+            renderNavbar();
+            // Re-render current page to apply new language
+            const event = new HashChangeEvent('hashchange');
+            window.dispatchEvent(event);
+        });
+    });
+
     // Initialize Icons
     if (window.lucide) {
         window.lucide.createIcons();

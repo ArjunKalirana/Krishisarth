@@ -5,6 +5,15 @@ from app.api import deps
 from app.db.postgres import get_db
 from app.services import ai_service
 from app.models.ai_decision import AIDecision
+from pydantic import BaseModel
+import httpx
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
 
 router = APIRouter()
 
@@ -73,3 +82,54 @@ async def trigger_ai_inference(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="INFERENCE_EXECUTION_FAILED"
         )
+
+@router.post("/chat", response_model=dict)
+async def proxy_ai_chat(
+    request: ChatRequest,
+    current_farmer = Depends(deps.get_current_farmer)
+) -> Any:
+    """Proxy AI Chat to Groq, protecting the API Key."""
+    from app.core.config import settings
+    if not settings.GROQ_KEY:
+        raise HTTPException(status_code=500, detail="GROQ_KEY not configured on server")
+    
+    # Strip quotes if present from .env loading mistakes
+    groq_key = settings.GROQ_KEY.strip("'\"")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{"role": m.role, "content": m.content} for m in request.messages],
+                    "temperature": 0.6,
+                    "max_tokens": 1024
+                },
+                timeout=30.0
+            )
+            response.raise_for_status()
+            data = response.json()
+            reply_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            return {
+                "success": True, 
+                "data": {"reply": reply_text}
+            }
+        except Exception as e:
+            logger_name = f"{__name__}.chat_proxy"
+            import logging
+            logger = logging.getLogger(logger_name)
+            
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_json = e.response.json()
+                    logger.error(f"Groq API Error Detail: {error_json}")
+                except:
+                    logger.error(f"Groq API Error Text: {e.response.text}")
+            
+            logger.error(f"Groq API Error: {str(e)}")
+            raise HTTPException(status_code=502, detail="AI_PROVIDER_ERROR")
