@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv
+venv/
+ENV/
+env/
+pythonv/
+pyvenv/
+.env
+.env.*
+!.env.example
+
+# Node / JS
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+.nuxt/
+.cache/
+dist/
+tmp/
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+.classpath
+.factorypath
+
+# OS / System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Databases
+*.sqlite3
+*.db
+
+# Logs
+log/
+*.log
+logs/
+
+# Backend specific
+backend/venv/
+backend/.env
+backend/__pycache__/
+
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Firmware / Hardware
+*.bin
+*.hex
+*.elf
+firmware/.pio/
+firmware/.vscode/

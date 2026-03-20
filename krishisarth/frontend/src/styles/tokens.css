@@ -1,0 +1,58 @@
+/* KrishiSarth Design Tokens & Utility Classes */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-dry {
+    background-color: #FEE2E2; /* red-100 */
+    color: #991B1B; /* red-800 */
+}
+
+.badge-ok {
+    background-color: #D1FAE5; /* green-100 */
+    color: #065F46; /* green-800 */
+}
+
+.badge-wet {
+    background-color: #DBEAFE; /* blue-100 */
+    color: #1E40AF; /* blue-800 */
+}
+
+.badge-warning {
+    background-color: #FFEDD5; /* orange-100 */
+    color: #9A3412; /* orange-800 */
+}
+
+.badge-critical {
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #F87171;
+}
+
+/* Visualization Helpers */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.meter-track {
+    background-color: #E5E7EB;
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.5s ease-out;
+}

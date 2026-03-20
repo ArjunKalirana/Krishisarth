@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 15 - Relational database for farmers, farms, zones, and schedules
+  postgres:
+    image: postgres:15-alpine
+    container_name: krishisarth-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # InfluxDB 2.x - Time-series database for high-frequency soil and ambient sensor readings
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: krishisarth-influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUXDB_RETENTION}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  # Redis 7 - Cache and broker for Celery tasks, rate limiting, and dashboard snapshots
+  redis:
+    image: redis:7-alpine
+    container_name: krishisarth-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Mosquitto MQTT Broker - Message broker for ESP32 nodes and edge gateway communication
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: krishisarth-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  influxdb_data:
+  redis_data:
+  mosquitto_data:
+  mosquitto_log:

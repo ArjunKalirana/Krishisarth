@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiSarth | Smart IoT Farming</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: DM Sans & DM Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- KrishiSarth Tokens -->
+    <link rel="stylesheet" href="./src/styles/tokens.css">
+
+    <style>
+        :root {
+            --color-primary: #1a7a4a;
+            --color-primary-light: #2ECC71;
+            --color-primary-dark: #0f5232;
+            --color-bg: #f0f7f3;
+            --color-bg-card: #ffffff;
+            --font-main: 'DM Sans', sans-serif;
+            --font-mono: 'DM Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-bg);
+            color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .brand-text {
+            color: var(--color-primary);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-primary-light);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 rgba(46, 204, 113, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        /* Standardized Cards */
+        .ks-card {
+            background-color: var(--color-bg-card);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(26, 122, 74, 0.08);
+        }
+    </style>
+
+    <script>
+        // Tailwind Configuration for Brand Colors
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#1a7a4a',
+                            light: '#2ECC71',
+                            dark: '#0f5232',
+                        },
+                        bg: '#f0f7f3',
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="antialiased">
+    <div id="navbar-root" class="sticky top-0 z-50"></div>
+
+    <main id="app-root" class="flex-grow container mx-auto px-4 py-8">
+        <!-- SPA content renders here -->
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p class="text-gray-500 font-medium font-mono text-sm">INITIALIZING KRISHISARTH CORE...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-100 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-500 text-sm font-medium">
+                KrishiSarth &copy; 2025 | Powered by <span class="text-primary font-bold">IoT + AI</span> | Smart Farming for Every Acre
+            </p>
+        </div>
+    </footer>
+
+    <!-- App Scripts -->
+    <script type="module" src="./src/app.js"></script>
+</body>
+</html>
