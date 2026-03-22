@@ -20,7 +20,12 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set the sqlalchemy.url from our internal settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Railway provides DATABASE_URL as "postgres://..." but SQLAlchemy 2.x
+# requires "postgresql://...". Fix the scheme before Alembic uses it.
+_db_url = settings.DATABASE_URL
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+config.set_main_option("sqlalchemy.url", _db_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
