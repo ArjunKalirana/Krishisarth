@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # CORS — add your Vercel URL here OR override via CORS_ORIGINS env var
     # as a comma-separated string: "https://a.vercel.app,http://localhost:3000"
     CORS_ORIGINS: list[str] = [
-        # Production frontend — replace with your actual Vercel deployment URL
+        # Production frontend
         "https://krishisarth.vercel.app",
         # Local development
         "http://localhost:5173",
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8000",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "null",  # covers file:// protocol — browser sends Origin: null
+        "null",
     ]
 
     model_config = SettingsConfigDict(
